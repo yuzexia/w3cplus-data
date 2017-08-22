@@ -9,8 +9,11 @@
   "author": "yuze.xia",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.5.0",
     "cheerio": "^1.0.0-rc.2",
+    "eventproxy": "^1.0.0",
     "express": "^4.15.4",
+    "mongodb": "^2.2.31",
     "superagent": "^3.5.2"
   }
 }
