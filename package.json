@@ -2,9 +2,10 @@
   "name": "splider",
   "version": "1.0.0",
   "description": "www.w3cplus.com",
-  "main": "app.js",
+  "main": "src/app2.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon ./src/app.js"
   },
   "author": "yuze.xia",
   "license": "ISC",
@@ -13,7 +14,11 @@
     "cheerio": "^1.0.0-rc.2",
     "eventproxy": "^1.0.0",
     "express": "^4.15.4",
+    "iconv-lite": "^0.4.24",
     "mongodb": "^2.2.31",
+    "nodemon": "^1.18.9",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
     "superagent": "^3.5.2"
   }
 }
