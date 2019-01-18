@@ -5,7 +5,7 @@
   "main": "src/app2.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon ./src/app.js"
+    "dev": "nodemon ./src/app-mysql.js"
   },
   "author": "yuze.xia",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "express": "^4.15.4",
     "iconv-lite": "^0.4.24",
     "mongodb": "^2.2.31",
+    "mysql": "^2.16.0",
     "nodemon": "^1.18.9",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
