@@ -54,17 +54,17 @@ function loadPageData(url, index) {
                 loadPageData(url, ++index)
             } else {
                 console.log('完成了...');
-                // getSingleContent(contentData, 0)
+                getSingleContent(contentData, 0)
             }
-            console.log('max::::', max);
-            console.log(contentData.length);
+            // console.log('max::::', max);
+            // console.log(contentData.length);
         })
     })
 }
 
-// 获取单个帖子内容
-function getSingleContent(urls, index) {
-    console.log(`正在获取第${index}条数据，标题为：${urls[index].title}的内容`);
+// promise 获取单个帖子内容
+function getSingleContentPromise(urls, index) {
+    console.log(`正在获取第${index}条数据，标题为：${urls[index].title}的内容，url: ${urls[index].titleUrl}`);
 
     promise({
         uri: urls[index].titleUrl
@@ -91,10 +91,48 @@ function getSingleContent(urls, index) {
             getSingleContent(contentData, ++index);
         } else {
             console.log('threads 获取完成');
-            // console.log('threadData::::', threadData)
         }
     }).catch(error => {
         console.log('error', error);
+    })
+}
+
+// 获取单个帖子内容
+function getSingleContent(urls, index) {
+    console.log(`正在获取第${index}条数据，标题为：${urls[index].title}的内容，url: ${urls[index].titleUrl}`);
+
+    https.get(urls[index].titleUrl, response => {
+        let chunks = [];
+        response.on('data', chunk => {
+            chunks.push(chunk);
+        });
+
+        response.on('end', () => {
+            let html = Buffer.concat(chunks);
+            let $ = cheerio.load(html, {decodeEntities: false});
+            let title = urls[index].title;
+            let basic = [];
+            let tags = [];
+            // 获取文章 作者，时间，浏览数
+            $('#block-system-main .submitted').find('span').each((idx, item) => {
+                let ele = $(item);
+                basic.push(ele.text());
+            })
+            // 获取标签
+            $('#block-system-main .tags').find('.field-item').each((idx, item) => {
+                let ele = $(item);
+                tags.push(ele.text());
+            });
+            let content = $('.body-content .field-items').html();
+            threadData.push({title, basic, tags, content});
+            saveThread({title, basic, tags, content});
+            if (index < urls.length - 1) {
+                getSingleContent(contentData, ++index);
+            } else {
+                console.log('threads 获取完成');
+            }
+        });
+
     })
 }
 
@@ -127,7 +165,39 @@ function saveLists(data) {
 
 // 保存帖子内容
 function saveThread(data) {
+    // console.log('data:::::', data);
+    // 通过title查询tid
+    let titleSql = 'SELECT * FROM lists WHERE title="' + data.title + '"';
+    // 添加到threads表中的sql
+    let addSql = 'INSERT INTO threads (tid, title, basic, message, tags, create_time, last_visit_time) VALUES(?, ?, ?, ?, ?, ?, ?)';
 
+    connection.query(titleSql, (error, result) => {
+        if (error) {
+            console.log('保存帖子-查询结果error:::::', error);
+        } else {
+            console.log('保存帖子-查询结果result:::::', result[0].id);
+            let params = [result[0].id, data.title, JSON.stringify(data.basic), data.content, JSON.stringify(data.tags), new Date(), new Date()];
+            // 通过tid查询
+            let tidSql = 'SELECT * FROM threads WHERE tid="' + result[0].id + '"';
+            connection.query(tidSql, (err, response) => {
+                if (err) {
+                    console.log('查询失败：：：', err);
+                } else {
+                    if (response.length) {
+                        console.log('插入threads数据库失败：帖子已经存在...');
+                    } else {
+                        connection.query(addSql, params, (e, res) => {
+                            if (e) {
+                                console.log('插入threads数据库失败...');
+                            } else {
+                                console.log('插入threads数据库成功');
+                            }
+                        })
+                    }
+                }
+            })
+        }
+    })
 }
 
 function main() {
@@ -136,26 +206,3 @@ function main() {
 }
 
 main();
-
-
-function testSql() {
-    connection.connect();
-    let sql = 'SELECT * FROM lists WHERE title=\'ggg\'';
-    // let sql = 'SELECT * FROM lists';
-    // 查
-    connection.query(sql, (err, result) => {
-        console.log('查：err:::', err);
-        console.log('查：result:::', result);
-    })
-    // 插入
-    let addSql = 'INSERT INTO lists (Id, title, titleUrl, summary, basic, tags, time) VALUES(0, ?, ?, ?, ?, ?, ?)';
-    let params = ['111', '222', '333', '444', '555', new Date()];
-    connection.query(addSql, params, (err, result) => {
-        console.log('新增err:::', err);
-        console.log('新增result:::', result);
-        console.log('新增 结束');
-    })
-}
-
-// testSql();
-
