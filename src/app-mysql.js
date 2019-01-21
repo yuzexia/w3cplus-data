@@ -41,13 +41,16 @@ function loadPageData(url, index) {
                     let _ele = $(item);
                     basic.push(_ele.text())
                 });
+                let author = basic[0];
+                let reDate = basic[1];
+                let views = basic[2];
                 // 获取tags信息
                 ele.children('.node-header').find('.field-item').each((idx, item) => {
                     let _ele = $(item);
                     tags.push(_ele.text());
                 });
-                contentData.push({title, titleUrl, summary, basic, tags});
-                saveLists({title, titleUrl, summary, basic, tags});
+                contentData.push({title, titleUrl, summary, basic, tags, author, reDate, views});
+                saveLists({title, titleUrl, summary, basic, tags, author, reDate, views});
             })
             if (index === 0) max = $('.pager-last').children('a').attr('href').split('=')[1]
             if (index < max) {
@@ -147,8 +150,19 @@ function saveLists(data) {
         if (error) {
             console.log('连接数据库失败...', error);
         } else {
+            console.log('lists:::::', result);
             if (result.length) {
                 console.log('数据已存在...');
+                // 已经存在，就更新数据  author, reDate, views
+                let updateSql = 'UPDATE lists SET author = ?, release_date = ?, views = ? WHERE id = ?';
+                let updateParams = [data.author, data.reDate, data.views, result[0].id];
+                connection.query(updateSql, updateParams, (err, res) => {
+                    if (err) {
+                        console.log('更新数据失败...', err);
+                    } else {
+                        console.log('更新数据成功...', result);
+                    }
+                })
             } else {
                 connection.query(addSql, params, (err, res) => {
                     if (err) {
@@ -185,6 +199,16 @@ function saveThread(data) {
                 } else {
                     if (response.length) {
                         console.log('插入threads数据库失败：帖子已经存在...');
+                        // 更新数据
+                        let updateSql = 'UPDATE threads SET basic = ?, message = ?, tags = ? WHERE tid = ?';
+                        let updateParams = [JSON.stringify(data.basic), data.content, JSON.stringify(data.tags), response[0].tid];
+                        connection.query(updateSql, updateParams, (e, res) => {
+                            if (e) {
+                                console.log('thread 更新数据失败...', e);
+                            } else {
+                                console.log('thread 更新数据成功...', res);
+                            }
+                        })
                     } else {
                         connection.query(addSql, params, (e, res) => {
                             if (e) {
